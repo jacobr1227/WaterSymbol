@@ -1,5 +1,4 @@
 //set variable for setup void graphics
-PShape cursor;
 //setup all pre-created/prerendered graphics and variables for generation
 PImage plance, psword, paxe, pcav, parmor, parcher, pmage;
 PImage elance, esword, eaxe, ecav, earmor, earcher, emage;
@@ -10,7 +9,8 @@ int xtemp, ytemp;
 int r = 24;
 int c = 40;
 gameMap grid[][] = new gameMap[40][24]; //new class used for replicating the map and drawing the grid
-int puc = (int) Math.round(random(12)+5); //generate between 5 and 17 player units
+Selector cursor = new Selector(1000,600);
+int puc = (int) Math.round(random(12)+8); //generate between 8 and 20 player units
 int euc = (int) Math.round(random(15)+10); //generate between 10 and 25 enemy units
 int tc = (int) Math.round(random(50)); // generate up to 50 forest tiles
 int fc = (int) Math.round(random(20)); // generate up to 20 fort tiles
@@ -32,7 +32,7 @@ void setup() {
   hint(ENABLE_STROKE_PURE);
   background(20, 97, 207);
   //load images
-  f = createFont("SourceSansPro-Regular.otf", 16);
+  f = createFont("SourceSansPro-Regular.otf", 20);
   textFont(f);
   name = loadShape("titletext.svg");
   plance = loadImage("plance.png");
@@ -49,14 +49,10 @@ void setup() {
   earmor = loadImage("earmor.png");
   earcher = loadImage("earcher.png");
   emage = loadImage("emage.png");
-  //create the cursor shape
-  cursor = createShape();
-  cursor.beginShape();
-  
-  cursor.endShape(CLOSE);
+
 }
 
-boolean title = true;
+boolean title = true, menu = false, fight = false, about = false, hold = false, move = false;
 void draw() {
   /*TODO:
   - Add Gameplay
@@ -68,7 +64,7 @@ void draw() {
   if(title) {
     shape(name,width*0.37,300);
     type("by Jacob Rogers", 1820, 1140, 255);
-    type("Press any button to continue!", 920, 440, 255);
+    type("Press any button to continue!", 900, 440, 255);
   }
   if(title && mousePressed || title && keyPressed) { //recognize "any button", then begin worldgen
     title = false;
@@ -89,7 +85,47 @@ void draw() {
     for(int i=0;i<euc;i++) {
       enu[i].unitDraw();
     }
+    cursor.Display();
   }
+  if(keyPressed) { //moving the cursor when not in combat, and when a unit is not selected
+    if(!hold) {
+      hold = true;
+      if(key == CODED) {
+        if(keyCode == UP) {
+          if(cursor.getY()+50 >=0) {
+            cursor.setLocation(cursor.getX(), cursor.getY()-50);
+          }
+        }
+        if(keyCode == LEFT) {
+          if(cursor.getX()-50 >=0) {
+            cursor.setLocation(cursor.getX()-50, cursor.getY());
+          }
+        }
+        if(keyCode == DOWN) {
+          if(cursor.getY()-50 <=1150) {
+            cursor.setLocation(cursor.getX(), cursor.getY()+50);
+          }
+        }
+        if(keyCode == RIGHT) {
+          if(cursor.getX()+50 <=1950) {
+            cursor.setLocation(cursor.getX()+50, cursor.getY());
+          }
+        }
+      }
+      if(key == 'z' && !move || key == 'Z' && !move) {
+        
+      }
+    }
+  }
+  if(!keyPressed) {
+   hold = false; 
+  }
+  if(menu) {
+    
+  }
+}
+
+void cursorupdate() {
   
 }
 
@@ -203,7 +239,8 @@ void generateTiles() { // for generating the actual map of tiles
     } 
   }
 }
-
+int occupied[][] = new int[euc][2];
+int playoccu[][] = new int[puc][2];
 void placeUnits() { //for generating the actual map of units
   int corner = (int) Math.round(random(3)+1);
   int ecornr = 1;
@@ -214,6 +251,8 @@ void placeUnits() { //for generating the actual map of units
     tempx = 0; tempy = 0;
     for(int i=0;i<puc;i++) { //places the player team in an organized fashion within a certain zone, top left
        plu[i].setLocation(tempx,tempy);
+       playoccu[i][0] = tempx;
+       playoccu[i][1] = tempy;
        tempx+=100;
        if(tempx==400) {
          tempx=50;
@@ -230,6 +269,8 @@ void placeUnits() { //for generating the actual map of units
     tempx = 1950; tempy = 0;
     for(int i=0;i<puc;i++) { //top right
        plu[i].setLocation(tempx,tempy);
+       playoccu[i][0] = tempx;
+       playoccu[i][1] = tempy;
        tempx-=100;
        if(tempx==1550) {
          tempx=1900;
@@ -246,6 +287,8 @@ void placeUnits() { //for generating the actual map of units
     tempx = 0; tempy = 1150;
     for(int i=0;i<puc;i++) { //bottom left
        plu[i].setLocation(tempx,tempy);
+       playoccu[i][0] = tempx;
+       playoccu[i][1] = tempy;
        tempx+=100;
        if(tempx==500) {
          tempx=50;
@@ -262,6 +305,8 @@ void placeUnits() { //for generating the actual map of units
     tempx = 1950; tempy = 1150;
     for(int i=0;i<puc;i++) { //bottom right
        plu[i].setLocation(tempx,tempy);
+       playoccu[i][0] = tempx;
+       playoccu[i][1] = tempy;
        tempx-=100;
        if(tempx==1550) {
          tempx=1900;
@@ -274,7 +319,7 @@ void placeUnits() { //for generating the actual map of units
     }
   }
   boolean repeat = true;
-  int occupied[][] = new int[euc][2];
+  
   tempx = 0; tempy = 0;
   for(int i=0;i<euc;i++) { //places enemies randomly, but not occupying the player unit zone
   repeat = true;
@@ -310,8 +355,22 @@ void placeUnits() { //for generating the actual map of units
       for(int b=0;b<euc;b++) {
         if(occupied[b][0] == occupied[a][0] && b != a) {
           if(occupied[b][1] == occupied[a][1]) {
-            tempx= (int)Math.round(random(30+10)); 
-            tempy= (int)Math.round(random(18+8));
+            if(ecornr==1) {
+               tempx= (int)Math.round(random(30));
+               tempy= (int)Math.round(random(18));
+            }
+            if(ecornr==2) {
+               tempx= (int)Math.round(random(30+10));
+               tempy= (int)Math.round(random(18));
+            }
+            if(ecornr==3) {
+               tempx= (int)Math.round(random(30)); 
+               tempy= (int)Math.round(random(18+8));
+            }
+            if(ecornr==4) {
+               tempx= (int)Math.round(random(30+10)); 
+               tempy= (int)Math.round(random(18+8));
+            }
             enu[b].setLocation(tempx*50,tempy*50);
           }
         }

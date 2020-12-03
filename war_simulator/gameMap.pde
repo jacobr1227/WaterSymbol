@@ -15,6 +15,7 @@ class gameMap {
   }
   
   public void fullDisplay() { //for redrawing on all frames
+    strokeWeight(1);
     stroke(0);
     if(t == 0) {
       fill(40,180,40);
