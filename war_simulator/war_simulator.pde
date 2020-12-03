@@ -2,13 +2,14 @@
 //setup all pre-created/prerendered graphics and variables for generation
 PImage plance, psword, paxe, pcav, parmor, parcher, pmage;
 PImage elance, esword, eaxe, ecav, earmor, earcher, emage;
+int r = 16; //set equal to double the height divided by 100
+int c = 24; //set equal to double the width divided by 100
 PShape name;
 PFont f;
-int tilePos[][] = new int[40][24];
+int holdx=0,holdy=0;
+int tilePos[][] = new int[c][r];
 int xtemp, ytemp;
-int r = 24;
-int c = 40;
-gameMap grid[][] = new gameMap[40][24]; //new class used for replicating the map and drawing the grid
+gameMap grid[][] = new gameMap[c][r]; //new class used for replicating the map and drawing the grid
 Selector cursor = new Selector(1000,600);
 int puc = (int) Math.round(random(12)+8); //generate between 8 and 20 player units
 int euc = (int) Math.round(random(15)+10); //generate between 10 and 25 enemy units
@@ -18,7 +19,7 @@ Unit plu[] = new Unit[puc];
 Unit enu[] = new Unit[euc];
 
 void setup() {
-  size(2000,1200);
+  size(1200,800);
   for(int i=0;i<c;i++) {
     for(int a=0;a<r;a++) {
       grid[i][a] = new gameMap(i*50,a*50,50,50, tilePos[i][a]); //initializing the grid display
@@ -52,7 +53,7 @@ void setup() {
 
 }
 
-boolean title = true, menu = false, fight = false, about = false, hold = false, move = false;
+boolean title = true, menu = false, fight = false, about = false, hold = false, move = false,once = false;
 void draw() {
   /*TODO:
   - Add Gameplay
@@ -62,9 +63,12 @@ void draw() {
   
   //for the title screen to function
   if(title) {
-    shape(name,width*0.37,300);
-    type("by Jacob Rogers", 1820, 1140, 255);
-    type("Press any button to continue!", 900, 440, 255);
+    int subtitlex = (int) (width*.4);
+    int namex = (int) (width*.85);
+    int namey = (int) (height*.9);
+    shape(name,width*0.28,300);
+    type("by Jacob Rogers", namex, namey, 255);
+    type("Press any button to continue!", subtitlex, 440, 255);
   }
   if(title && mousePressed || title && keyPressed) { //recognize "any button", then begin worldgen
     title = false;
@@ -92,7 +96,7 @@ void draw() {
       hold = true;
       if(key == CODED) {
         if(keyCode == UP) {
-          if(cursor.getY()+50 >=0) {
+          if(cursor.getY()-50 >=0) {
             cursor.setLocation(cursor.getX(), cursor.getY()-50);
           }
         }
@@ -102,31 +106,76 @@ void draw() {
           }
         }
         if(keyCode == DOWN) {
-          if(cursor.getY()-50 <=1150) {
+          if(cursor.getY()+50 <=height-50) {
             cursor.setLocation(cursor.getX(), cursor.getY()+50);
           }
         }
         if(keyCode == RIGHT) {
-          if(cursor.getX()+50 <=1950) {
+          if(cursor.getX()+50 <=width-50) {
             cursor.setLocation(cursor.getX()+50, cursor.getY());
           }
         }
       }
       if(key == 'z' && !move || key == 'Z' && !move) {
-        
+        move = true;
       }
+      
+      
     }
   }
+  if(menu) {
+        //add attack, info and wait buttons
+        if(keyPressed) {
+          if(key == 'x' || key == 'X') {
+             menu = false;
+             move = false;
+             cursor.lx = holdx;
+             cursor.ly = holdy;
+          }
+        }
+      }
+  if(move) {
+    if(!once) {
+      mvrt();
+      once = true;
+    }
+        plu[unitfinder()].displayRange(holdx,holdy);
+        
+        if(keyPressed) {
+          if(!hold) {
+            if(key == 'x' || key == 'X') {
+              move = false;
+              once = false;
+              cursor.lx = holdx;
+              cursor.ly = holdy;
+            }
+            if(key == 'z' || key == 'Z') {
+              menu = true;
+              move = false;
+              once = false;
+            }
+          }
+        }
+      }
   if(!keyPressed) {
    hold = false; 
   }
-  if(menu) {
-    
-  }
 }
 
-void cursorupdate() {
-  
+private int unitfinder() {
+  int n = 0;
+  //finds the specified unit
+  for(int i=0;i<plu.length;i++) {
+    if(plu[i].locx == cursor.lx && plu[i].locy == cursor.ly) {
+      n = i;
+    }
+  }
+  return n;
+}
+void mvrt() {
+  //sets the return point for the cursor, and allows the movement range to remain static
+  holdx=cursor.lx;
+  holdy=cursor.ly;
 }
 
 void type(String w, int x, int y, int c) { //for easier typeface on screen
@@ -211,21 +260,21 @@ void generateUnit() { //for making stats and classes for generated units
 void generateTiles() { // for generating the actual map of tiles
   randomSeed((long)random(100000000));
   for(int i=0;i<tc;i++) { //creates a list of forest tiles
-    xtemp = (int) Math.round(random(39))*50;
-    ytemp = (int) Math.round(random(23))*50;
+    xtemp = (int) Math.round(random(c-1))*50;
+    ytemp = (int) Math.round(random(r-1))*50;
     tilePos[xtemp/50][ytemp/50] = 2;
     fill(37,66,36);
     rect(xtemp,ytemp,50,50);
   }
   for(int i=0;i<fc;i++) { //creates a list of fort tiles
-    xtemp = (int) Math.round(random(39))*50;
-    ytemp = (int) Math.round(random(23))*50;
+    xtemp = (int) Math.round(random(c-1))*50;
+    ytemp = (int) Math.round(random(r-1))*50;
     tilePos[xtemp/50][ytemp/50] = 1;
     fill(198,201,111);
     rect(xtemp,ytemp,50,50);
   }
-  for(int i=0;i<40;i++) { //ensures all remaining tiles are plains.
-    for(int z=0;z<24;z++) {
+  for(int i=0;i<c;i++) { //ensures all remaining tiles are plains.
+    for(int z=0;z<r;z++) {
       if(tilePos[i][z] == -1) {
         tilePos[i][z] = 0;
         rect(i*50,z*50,50,50);
@@ -254,7 +303,7 @@ void placeUnits() { //for generating the actual map of units
        playoccu[i][0] = tempx;
        playoccu[i][1] = tempy;
        tempx+=100;
-       if(tempx==400) {
+       if(tempx==500) {
          tempx=50;
          tempy+=50;
        }
@@ -266,25 +315,25 @@ void placeUnits() { //for generating the actual map of units
   }
   else if(corner == 2) {
     ecornr = 3;
-    tempx = 1950; tempy = 0;
+    tempx = width-50; tempy = 0;
     for(int i=0;i<puc;i++) { //top right
        plu[i].setLocation(tempx,tempy);
        playoccu[i][0] = tempx;
        playoccu[i][1] = tempy;
        tempx-=100;
-       if(tempx==1550) {
-         tempx=1900;
+       if(tempx==width-450) {
+         tempx=width-100;
          tempy+=50;
        }
-      if(tempx==1500) {
-        tempx=1950;
+      if(tempx==width-500) {
+        tempx=width-50;
         tempy+=50;
       }
     }
   }
   else if(corner == 3) {
     ecornr = 2;
-    tempx = 0; tempy = 1150;
+    tempx = 0; tempy = height-50;
     for(int i=0;i<puc;i++) { //bottom left
        plu[i].setLocation(tempx,tempy);
        playoccu[i][0] = tempx;
@@ -302,18 +351,18 @@ void placeUnits() { //for generating the actual map of units
   }
   else if(corner == 4) {
     ecornr = 1;
-    tempx = 1950; tempy = 1150;
+    tempx = width-50; tempy = height-50;
     for(int i=0;i<puc;i++) { //bottom right
        plu[i].setLocation(tempx,tempy);
        playoccu[i][0] = tempx;
        playoccu[i][1] = tempy;
        tempx-=100;
-       if(tempx==1550) {
-         tempx=1900;
+       if(tempx==width-450) {
+         tempx=width-100;
          tempy-=50;
        }
-      if(tempx==1500) {
-        tempx=1950;
+      if(tempx==width-500) {
+        tempx=width-50;
         tempy-=50;
       }
     }
@@ -325,20 +374,20 @@ void placeUnits() { //for generating the actual map of units
   repeat = true;
     while(repeat) {
       if(ecornr==1) {
-         tempx= (int)Math.round(random(30));
-         tempy= (int)Math.round(random(18));
+         tempx= (int)Math.round(random(c*.75));
+         tempy= (int)Math.round(random(r*.75));
       }
       if(ecornr==2) {
-         tempx= (int)Math.round(random(30+10));
-         tempy= (int)Math.round(random(18));
+         tempx= (int)Math.round(random(c*.75+c*.25));
+         tempy= (int)Math.round(random(r*.75));
       }
       if(ecornr==3) {
-         tempx= (int)Math.round(random(30)); 
-         tempy= (int)Math.round(random(18+8));
+         tempx= (int)Math.round(random(c*.75)); 
+         tempy= (int)Math.round(random(r*.75+r*.25));
       }
       if(ecornr==4) {
-         tempx= (int)Math.round(random(30+10)); 
-         tempy= (int)Math.round(random(18+8));
+         tempx= (int)Math.round(random(c*.75+c*.25)); 
+         tempy= (int)Math.round(random(r*.75+r*.25));
       }
       
       if(occupied[i][0] == tempx && occupied[i][1] == tempy) {
@@ -356,20 +405,20 @@ void placeUnits() { //for generating the actual map of units
         if(occupied[b][0] == occupied[a][0] && b != a) {
           if(occupied[b][1] == occupied[a][1]) {
             if(ecornr==1) {
-               tempx= (int)Math.round(random(30));
-               tempy= (int)Math.round(random(18));
+               tempx= (int)Math.round(random(c*.75));
+               tempy= (int)Math.round(random(r*.75));
             }
             if(ecornr==2) {
-               tempx= (int)Math.round(random(30+10));
-               tempy= (int)Math.round(random(18));
+               tempx= (int)Math.round(random(c*.75+c*.25));
+               tempy= (int)Math.round(random(r*.75));
             }
             if(ecornr==3) {
-               tempx= (int)Math.round(random(30)); 
-               tempy= (int)Math.round(random(18+8));
+               tempx= (int)Math.round(random(c*.75)); 
+               tempy= (int)Math.round(random(r*.75+r*.25));
             }
             if(ecornr==4) {
-               tempx= (int)Math.round(random(30+10)); 
-               tempy= (int)Math.round(random(18+8));
+               tempx= (int)Math.round(random(c*.75+c*.25)); 
+               tempy= (int)Math.round(random(r*.75+r*.25));
             }
             enu[b].setLocation(tempx*50,tempy*50);
           }
