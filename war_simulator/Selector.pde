@@ -36,10 +36,4 @@ public void Display() {
   noFill();
   rect(this.lx, this.ly, 50,50);
 }
-
-public void displayRange() {
- noStroke();
- fill(255,0,0);
- 
-}
 }

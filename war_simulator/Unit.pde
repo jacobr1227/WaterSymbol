@@ -30,9 +30,38 @@ class Unit {
     stats[7]=this.uid;
     return stats;
   }
-  
+  public void displayRange(int x, int y) {
+    noStroke();
+    fill(0,50,200, 100);
+    for(int i=0;i<=this.mv;i++) {
+      //movement range in blue
+      //displays main axes
+      rect(x+(i*50),y,50,50);
+      rect(x-(i*50),y,50,50);
+      rect(x,y+(i*50),50,50);
+      rect(x,y-(i*50),50,50);
+      //displays difficult diagonals
+      for(int a=0;a<this.mv-i;a++) {
+        rect(x+(a*50),y+i,50,50);
+        rect(x-(a*50),y-i,50,50);
+        rect(x+i,y+(a*50),50,50);
+        rect(x-i,y-(a*50),50,50);
+      }
+    }
+    //combat range in red
+    fill(200,50,50, 100);
+    //cardinal axes
+    rect(x+((this.mv+1)*50),y,50,50);
+    rect(x-((this.mv+1)*50),y,50,50);
+    rect(x,y+((this.mv+1)*50),50,50);
+    rect(x,y-((this.mv+1)*50),50,50);
+    
+  }
   public void damage(int damage) {
      this.HPNow -= damage;
+  }
+  public int getMv() {
+   return this.mv; 
   }
   public void setLocation(int x, int y) {
      this.locx=(int) x;
