@@ -452,7 +452,7 @@ void placeUnits() { //for generating the actual map of units
     tempx = 0; tempy = 0;
     for(int i=0;i<puc;i++) { //places the player team in an organized fashion within a certain zone, top left
        plu[i].setLocation(tempx,tempy);
-       playoccu[i][0] = plu[puc].uid;
+       playoccu[i][0] = plu[i].uid;
        playoccu[i][1] = tempx;
        playoccu[i][2] = tempy;
        tempx+=100;
@@ -471,7 +471,7 @@ void placeUnits() { //for generating the actual map of units
     tempx = width-50; tempy = 0;
     for(int i=0;i<puc;i++) { //top right
        plu[i].setLocation(tempx,tempy);
-       playoccu[i][0] = plu[puc].uid;
+       playoccu[i][0] = plu[i].uid;
        playoccu[i][1] = tempx;
        playoccu[i][2] = tempy;
        tempx-=100;
@@ -490,7 +490,7 @@ void placeUnits() { //for generating the actual map of units
     tempx = 0; tempy = height-50;
     for(int i=0;i<puc;i++) { //bottom left
        plu[i].setLocation(tempx,tempy);
-       playoccu[i][0] = plu[puc].uid;
+       playoccu[i][0] = plu[i].uid;
        playoccu[i][1] = tempx;
        playoccu[i][2] = tempy;
        tempx+=100;
@@ -509,7 +509,7 @@ void placeUnits() { //for generating the actual map of units
     tempx = width-50; tempy = height-50;
     for(int i=0;i<puc;i++) { //bottom right
        plu[i].setLocation(tempx,tempy);
-       playoccu[i][0] = plu[puc].uid;
+       playoccu[i][0] = plu[i].uid;
        playoccu[i][1] = tempx;
        playoccu[i][2] = tempy;
        tempx-=100;
