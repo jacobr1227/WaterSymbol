@@ -10,6 +10,10 @@ int r = 16; //set equal to double the height divided by 100
 int c = 24; //set equal to double the width divided by 100
 PShape name;
 PFont f;
+int dmval = 0;
+int hitrate, critrate;
+int rand1=0,rand2=0,rand3=0;
+boolean hit = false;
 int holdx=0,holdy=0;
 int p=0, oops=0;
 int selection = 1;
@@ -29,9 +33,10 @@ Unit enu[] = new Unit[euc];
 
 void setup() {
   size(1200,800);
+  frameRate(60);
   path = sketchPath(audioName);
   file = new SoundFile(this, path);
-  file.play();
+  file.loop();
   for(int i=0;i<c;i++) {
     for(int a=0;a<r;a++) {
       grid[i][a] = new gameMap(i*50,a*50,50,50, tilePos[i][a]); //initializing the grid display
@@ -70,13 +75,12 @@ void setup() {
 
 }
 
-boolean title = true, menu = false, fight = false, about = false, hold = false, move = false,once = false, notag=false;
+boolean title = true, menu = false, fight = false, about = false, hold = false, move = false,once = false, notag=false, eabout=false;
 void draw() {
   /*TODO:
-  - Add Enemy AI
-  - Add turn changes
-  - Add combat, add hp updates
-  - Clean up
+  - fix the combat selector display
+  - fix the width of crit messages
+  - fix the enemy info page
   */
   
   //for the title screen to function
@@ -150,24 +154,27 @@ void draw() {
           }
         }
         if(keyCode == DOWN) {
-          if(point.ly+30 <=128) {
+          if(point.ly+30 <=158) {
             point.ly+=30;
             msel++;
           }
         }
       }
-      if(key == CODED && fight && !pick) {
+      if(key == CODED && fight && !pick && !hold) {
         hold = true;
           if(keyCode == UP && selection>1|| keyCode == LEFT && selection>1) {
             selection--;
             cursor.lx=nearby[selection][0];
             cursor.ly=nearby[selection][1];
+            cursor.Display();
           }
           if(keyCode == DOWN && selection<oops || keyCode == RIGHT && selection<oops) {
             selection++;
             cursor.lx=nearby[selection][0];
             cursor.ly=nearby[selection][1];
+            cursor.Display();
           }
+          
       }
       if((key == 'z' && !move && menu && !hold) || (key == 'Z' && !move && menu && !hold)) {
         hold=true;
@@ -192,6 +199,13 @@ void draw() {
           menu = false;
           move = false;
         }
+        if(msel==4) {
+          for(int i=0;i<puc;i++) {
+            plu[i].turn = false;
+            plu[i].unitDraw();
+          }
+          menu=false;
+        }
       }
       if((key == 'z' && move && !isOnUnit() && !cursor.isOccupied() && cursor.distanceFrom(plu[url].locx, plu[url].locy, plu[url].mv) && !hold) || (key == 'Z' && !isOnUnit() && !cursor.isOccupied() && move && cursor.distanceFrom(plu[url].locx, plu[url].locy, plu[url].mv) && !hold)) {
         hold = true;
@@ -202,26 +216,38 @@ void draw() {
         move = false;
         once = false;
       }
-      if((key == 'z' && !move && !menu && isOnUnit() && !hold && plu[unitfinder(cursor.lx,cursor.ly)].turn) || (key == 'Z' && !move && !menu && isOnUnit() && !hold && plu[unitfinder(cursor.lx,cursor.ly)].turn)) {
+      if(key == 'z' && move &&  cursor.lx == plu[url].locx && cursor.ly == plu[url].locy && !hold || key == 'Z' && move &&  cursor.lx == plu[url].locx && cursor.ly == plu[url].locy && !hold) {
+        hold = true;
+        menu = true;
+        move = false;
+        once = false;
+      }
+      if((key == 'z' && !move && !fight && !menu && isOnUnit() && !hold && plu[unitfinder(cursor.lx,cursor.ly)].turn) || (key == 'Z' && !move && !menu && !fight && isOnUnit() && !hold && plu[unitfinder(cursor.lx,cursor.ly)].turn)) {
         hold = true;
         move = true;
       }
-      if(key == 'z' && !hold && !pick && fight || key == 'Z' && !hold && !pick && fight) {
-          pick = true; 
+      if(key == 'z' && !hold && !pick && !menu && !move && fight || key == 'Z' && !hold && !pick && !move && !menu && fight) {
+        hold = true;
+          pick = true;
         }
+      if(key == 'z' && !move && !menu && !fight && !about && cursor.isOccupied() && !hold || key == 'Z' && !move && !menu && !fight && !about && cursor.isOccupied() && !hold) {
+        eabout = true;
+        hold = true;
+      }
         if(key == 'x' && !hold && !pick && !menu && !move && fight || key == 'x' && !hold && !pick && !menu && !move && fight) {
+          hold = true;
           fight = false;
           menu = true;
         }
       
-      if((key == 'x' && move && !hold) || (key == 'X' && move && !hold)) {
+      if((key == 'x' && move && !fight && !hold) || (key == 'X' && move && !hold)) {
         hold = true;
         move = false;
         once = false;
         cursor.lx = holdx;
         cursor.ly = holdy;
       }
-      if((key == 'x' && menu && !move & !hold) || (key == 'X' && menu && !move && !hold)) {
+      if((key == 'x' && menu && !fight && !move & !hold) || (key == 'X' && menu && !move && !hold)) {
         menu = false;
         move = false;
         hold = true;
@@ -231,8 +257,13 @@ void draw() {
         plu[url].locy = holdy;
         plu[url].unitDraw();
       }
-      if((key == 'x' && about && !hold) || (key == 'X' && about && !hold)) {
+      if((key == 'x' && about && !fight && !hold) || (key == 'X' && about && !fight &&!hold)) {
        about=false;
+       menu=true;
+       hold = true;
+      }
+      if((key == 'x' && eabout && !fight && !menu && !move && !hold) || (key == 'X' && about && !fight && !menu && !move && !hold)) {
+       eabout=false;
        menu=true;
        hold = true;
       }
@@ -262,6 +293,7 @@ void draw() {
     type("Attack",75,90,255,255,255,255);
     type("Info",75,120,255,255,255,255);
     type("Wait",75,150,255,255,255,255);
+    type("End",75,180,255,255,255,255);
     point.displayForMenu();
   }
   if(move) {
@@ -279,107 +311,127 @@ void draw() {
   }
   if(fight) {
     if(pick) {
-    int rand1=0,rand2=0,rand3=0;
         rand1 = (int) Math.round(random(99))+1;
         rand2 = (int) Math.round(random(99))+1;
         rand3 = (int) Math.round(random(99))+1;
-        int hitrate = plu[url].skl*2+plu[url].lck/2;
-        int critrate = plu[url].lck/3;
+        hitrate = plu[url].skl*2+plu[url].lck/2;
+        critrate = plu[url].lck/3;
         if((rand1+rand2)/2 <=hitrate) {
           if(rand3 <= critrate) {
-            enu[enfinder(nearby[selection][0], nearby[selection][0])].damage((plu[url].strMag-enu[enfinder(nearby[selection][0], nearby[selection][0])].def)*3);
-              strokeWeight(5);
-              stroke(0);
-              fill(255);
-              rect(530,370,130,50);
-              type("Crit! " + (plu[url].strMag-enu[enfinder(nearby[selection][0], nearby[selection][0])].def)*3 + " damage.", 535, 395, 0, 0, 0, 255);
-              delay(2000);
+            dmval = (plu[url].strMag-enu[enfinder(nearby[selection][0], nearby[selection][1])].def)*3;
+            hit = true;
+            enu[enfinder(nearby[selection][0], nearby[selection][1])].damage(dmval);
             plu[url].turn = false;
             url=-1;
             fight = false;
+            selection = 1;
+            nearby[0][0] = -1;
+            pick = false;
           }
           else {
-            enu[enfinder(nearby[selection][0], nearby[selection][0])].damage((plu[url].strMag-enu[enfinder(nearby[selection][0], nearby[selection][0])].def));
-              strokeWeight(5);
-              stroke(0);
-              fill(255);
-              rect(530,370,130,50);
-              type((plu[url].strMag-enu[enfinder(nearby[selection][0], nearby[selection][0])].def) + " damage.", 535, 395, 0, 0, 0, 255); 
-              delay(2000);
+            
+            dmval = (plu[url].strMag-enu[enfinder(nearby[selection][0], nearby[selection][1])].def);
+            enu[enfinder(nearby[selection][0], nearby[selection][1])].damage(dmval);
             plu[url].turn = false;
+            hit = true;
             url=-1;
             fight = false;
+            selection = 1;
+            nearby[0][0] = -1;
+            pick = false;
         }
       }
         else {
-              strokeWeight(5);
-              stroke(0);
-              fill(255);
-              rect(530,370,130,50);
-              type("Attack missed.", 535, 395, 0, 0, 0, 255); 
-              delay(2000);
-            plu[url].turn = false;
+          plu[url].turn = false;
             url=-1;
+            hit = false;
             fight = false;
         }
        }
+       
   }
   if(turnOver()) {
     //have enemies approach nearest allies and attack. Don't add priorities, keep it simple
-    for(int i=0;i<enu.length;i++) {
+    for(int i=0;i<euc;i++) {
       enu[i].AI();
       enu[i].unitDraw();
       if(enu[i].fightx==-1 ||enu[i].fighty==-1) {
-        break;
+        //do nothing
       }
       else {
-        int rand1=0,rand2=0,rand3=0;
+        
         rand1 = (int) Math.round(random(99))+1;
         rand2 = (int) Math.round(random(99))+1;
         rand3 = (int) Math.round(random(99))+1;
-        int hitrate = enu[i].skl*2+enu[i].lck/2;
-        int critrate = enu[i].lck/3;
+        hitrate = enu[i].skl*2+enu[i].lck/2;
+        critrate = enu[i].lck/3;
         if((rand1+rand2)/2 <=hitrate) {
           if(rand3 <= critrate) {
-            plu[unitfinder(enu[i].fightx,enu[i].fighty)].damage((enu[i].strMag-plu[unitfinder(enu[i].fightx,enu[i].fighty)].def)*3);
-            if(p<70) {
-              p++;
-              strokeWeight(5);
-              stroke(0);
-              fill(255);
-              rect(530,370,130,50);
-              type("Crit! " + (enu[i].strMag-plu[unitfinder(enu[i].fightx,enu[i].fighty)].def)*3 + " damage.", 535, 395, 0, 0, 0, 255); 
-            }
-            p=0;
+            dmval =((enu[i].strMag-plu[unitfinder(enu[i].fightx,enu[i].fighty)].def)*3);
+            plu[unitfinder(enu[i].fightx,enu[i].fighty)].damage(dmval);
+            hit = true;
+            fight = false;
           }
-          else
-            plu[unitfinder(enu[i].fightx,enu[i].fighty)].damage(enu[i].strMag-plu[unitfinder(enu[i].fightx,enu[i].fighty)].def);
-            if(p<70) {
-              p++;
-              strokeWeight(5);
-              stroke(0);
-              fill(255);
-              rect(530,370,130,50);
-              type((enu[i].strMag-plu[unitfinder(enu[i].fightx,enu[i].fighty)].def)*3 + " damage.", 535, 395, 0, 0, 0, 255); 
-            }
-            p=0;
+          else {
+            
+            dmval =((enu[i].strMag-plu[unitfinder(enu[i].fightx,enu[i].fighty)].def)*3);
+            plu[unitfinder(enu[i].fightx,enu[i].fighty)].damage(dmval);
+            hit = true;
         }
+      }
         else {
-          if(p<70) {
-              p++;
-              strokeWeight(5);
-              stroke(0);
-              fill(255);
-              rect(530,370,130,50);
-              type("Attack missed.", 535, 395, 0, 0, 0, 255); 
-            }
-            p=0;
+            hit = false;
         }
         
       }
+    
+  }
+  for(int i=0;i<puc;i++) {
+   plu[i].turn = true; 
+  }
+  }
+  if(hit) {
+    if(p<100) {
+    p++;
+    if(rand3 <= critrate) {
+    strokeWeight(5);
+    stroke(0);
+    fill(255);
+    rect(530,370,130,50);
+    type("Crit! " + dmval + " damage.", 535, 395, 0, 0, 0, 255);
     }
-    for(int i=0;i<plu.length;i++) {
-      plu[i].turn = true;
+    else {
+      strokeWeight(5);
+      stroke(0);
+      fill(255);
+      rect(530,370,130,50);
+      type(dmval + " damage.", 535, 395, 0, 0, 0, 255);
+    }
+    }
+    else {
+    pick = false;
+    hit = false;
+    p=0;
+    
+    }
+  }
+  if((!hit && pick) ||(!hit && turnOver())) {
+    if(p<100) {
+      p++;
+    strokeWeight(5);
+    stroke(0);
+    fill(255);
+    rect(530,370,130,50);
+    type("Attack missed.", 535, 395, 0, 0, 0, 255); 
+    }
+    else {
+     p=0; 
+     pick = false;
+    }
+    if(turnOver()) {
+     for(int i=0;i<puc;i++) {
+      plu[i].turn= true; 
+     }
     }
   }
   if(about) { //displays the info screen for units
@@ -406,12 +458,35 @@ void draw() {
     type("Speed",100,160,255,255,255,255);
     type(String.valueOf(plu[url].spd),200,160,255,255,255,255);
   }
+  if(eabout) {
+    strokeWeight(1);
+    stroke(255);
+    fill(220,0,55);
+    rect(0,0,1200,800);
+    type(enu[enfinder(cursor.lx, cursor.ly)].getType(),100,100,0,0,0,255);
+    type("Str/Mag",100,120,255,255,255,255);
+    type(String.valueOf(enu[enfinder(cursor.lx, cursor.ly)].strMag),200,120,0,0,0,255);
+    type("HP",300,100,255,255,255,255);
+    type(String.valueOf(enu[enfinder(cursor.lx, cursor.ly)].HPNow) + "/",360,100,0,0,0,255);
+    type(String.valueOf(enu[enfinder(cursor.lx, cursor.ly)].HPMax),390,100,255,255,255,255);
+    type("Def",100,200,255,255,255,255);
+    type(String.valueOf(enu[enfinder(cursor.lx, cursor.ly)].def),200,200,0,0,0,255);
+    type("Res",100,220,255,255,255,255);
+    type(String.valueOf(enu[enfinder(cursor.lx, cursor.ly)].res),200,220,0,0,0,255);
+    type("Skill",100,140,255,255,255,255);
+    type(String.valueOf(enu[enfinder(cursor.lx, cursor.ly)].skl),200,140,0,0,0,255);
+    type("Move",240,120,255,255,255,255);
+    type(String.valueOf(enu[enfinder(cursor.lx, cursor.ly)].mv),300,120,0,0,0,255);
+    type("Luck",100,180,255,255,255,255);
+    type(String.valueOf(enu[enfinder(cursor.lx, cursor.ly)].lck),200,180,0,0,0,255);
+    type("Speed",100,160,255,255,255,255);
+    type(String.valueOf(enu[enfinder(cursor.lx, cursor.ly)].spd),200,160,0,0,0,255);
+  }
   if(!keyPressed) {
    hold = false; 
   }
-
-  } //end (!title)  
 }
+}//end of draw
 
 public int unitfinder(int x, int y) {
   int n = 0;
@@ -434,7 +509,7 @@ private int enfinder(int x, int y) {
 }
 private boolean turnOver() {
   for(int i=0;i<puc;i++) {
-    if(plu[i].turn == true) {
+    if(plu[i].turn) {
       return false;
     }
   }

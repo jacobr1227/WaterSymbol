@@ -7,11 +7,6 @@ class Selector {
  }
  
  public boolean isOccupied() {
-   for(int i=0;i<puc;i++) {
-     if(this.lx == playoccu[i][1] && this.ly == playoccu[i][2]) {
-       return true;
-     }
-   }
    for(int i=0;i<euc;i++) {
      if(this.lx == occupied[i][0] && this.ly == occupied[i][1]) {
        return true;
