@@ -332,9 +332,7 @@ class Unit {
   }
   public void damage(int damage) {
      this.HPNow -= damage;
-     if(this.HPNow <=0) {
-      killed(); 
-     }
+     
   }
   public void killed() {
     this.typ = "";

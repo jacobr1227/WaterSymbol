@@ -3,7 +3,7 @@ SoundFile file;
 String audioName = "will's song.wav";
 String path;
 //set variable for setup void graphics
-//setup all pre-created/prerendered graphics and variables for generation
+//setup all pre-created/prerendered graphics and variables for generation and engine work
 PImage plance, psword, paxe, pcav, parmor, parcher, pmage;
 PImage elance, esword, eaxe, ecav, earmor, earcher, emage;
 int r = 16; //set equal to double the height divided by 100
@@ -28,13 +28,13 @@ int puc = (int) Math.round(random(12)+8); //generate between 8 and 20 player uni
 int euc = (int) Math.round(random(15)+10); //generate between 10 and 25 enemy units
 int tc = (int) Math.round(random(50)); // generate up to 50 forest tiles
 int fc = (int) Math.round(random(20)); // generate up to 20 fort tiles
-Unit plu[] = new Unit[puc];
+Unit plu[] = new Unit[puc]; //for storing unit data and locations
 Unit enu[] = new Unit[euc];
 
 void setup() {
   size(1200,800);
   frameRate(60);
-  path = sketchPath(audioName);
+  path = sketchPath(audioName); //running the audio
   file = new SoundFile(this, path);
   file.loop();
   for(int i=0;i<c;i++) {
@@ -42,17 +42,17 @@ void setup() {
       grid[i][a] = new gameMap(i*50,a*50,50,50, tilePos[i][a]); //initializing the grid display
     } 
   }
-  for(int i=0;i<12;i++) {
+  for(int i=0;i<12;i++) { //initializing the array for damage locations
     for(int a=0;a<2;a++) {
       nearby[i][a] = -1;
     }
   }
-  for(int i=0;i<c;i++) {
+  for(int i=0;i<c;i++) { //initializing the array for placing tiles
    for(int z=0;z<r;z++) {
    tilePos[i][z] = -1;
    }
   }
-  hint(ENABLE_STROKE_PURE);
+  hint(ENABLE_STROKE_PURE); //not really necessary, but nice to have for one thing
   background(20, 97, 207);
   //load images
   f = createFont("SourceSansPro-Regular.otf", 20);
@@ -77,9 +77,8 @@ void setup() {
 
 boolean title = true, menu = false, fight = false, about = false, hold = false, move = false,once = false, notag=false, eabout=false;
 void draw() {
-  /*TODO:
+  /*TODO:                                yeah these probably won't get done.
   - fix the combat selector display
-  - fix the width of crit messages
   - fix the enemy info page
   */
   
@@ -105,13 +104,23 @@ void draw() {
          grid[i][a].fullDisplay(); //refresh
       } 
     }
-    for(int i=0;i<puc;i++) {
+    for(int i=0;i<puc;i++) { //refresh
+    if(plu[i].HPNow == 0) {
+      plu[i].killed();
+    }
+    else {
       plu[i].unitDraw();
     }
-    for(int i=0;i<euc;i++) {
+    }
+    for(int i=0;i<euc;i++) { //refresh
+    if(enu[i].HPNow==0) {
+     enu[i].killed(); 
+    }
+    else {
       enu[i].unitDraw();
     }
-    for(int i=0;i<playoccu.length;i++) {
+    }
+    for(int i=0;i<playoccu.length;i++) { //reset locations so unitfinder works right
      playoccu[i][1]=plu[playoccu[i][0]].locx; 
      playoccu[i][2]=plu[playoccu[i][0]].locy;
     }
@@ -144,7 +153,7 @@ void draw() {
             cursor.setLocation(cursor.getX()+50, cursor.getY());
           }
         }
-      }
+      } //menu movements
       if(key == CODED && menu) {
         hold = true;
         if(keyCode == UP) {
@@ -160,7 +169,7 @@ void draw() {
           }
         }
       }
-      if(key == CODED && fight && !pick && !hold) {
+      if(key == CODED && fight && !pick && !hold) { //works technically, but doesn't display right, can't find a fix for it
         hold = true;
           if(keyCode == UP && selection>1|| keyCode == LEFT && selection>1) {
             selection--;
@@ -176,7 +185,7 @@ void draw() {
           }
           
       }
-      if((key == 'z' && !move && menu && !hold) || (key == 'Z' && !move && menu && !hold)) {
+      if((key == 'z' && !move && menu && !hold) || (key == 'Z' && !move && menu && !hold)) { //these are all the interaction cases and what they should do
         hold=true;
         if(msel==1) {
           if(inRangeFinder()) {
@@ -269,7 +278,7 @@ void draw() {
       }
     }
   }
-  if(notag) {
+  if(notag) { //should there be no target in range
     if(p<120) {
       p++;
       strokeWeight(5);
@@ -297,7 +306,7 @@ void draw() {
     point.displayForMenu();
   }
   if(move) {
-    if(!once) {
+    if(!once) { //for setting up proper movement and attacking, eases figuring out the selected unit
       mvrt();
       once = true;
       url = unitfinder(cursor.lx, cursor.ly);
@@ -309,7 +318,7 @@ void draw() {
       plu[url].displayRange(holdx,holdy);
     }
   }
-  if(fight) {
+  if(fight) { //complicated but it works, does the damage calculation
     if(pick) {
         rand1 = (int) Math.round(random(99))+1;
         rand2 = (int) Math.round(random(99))+1;
@@ -351,12 +360,12 @@ void draw() {
        
   }
   if(turnOver()) {
-    //have enemies approach nearest allies and attack. Don't add priorities, keep it simple
+    //have enemies approach nearest allies and attack. Doesn't add priorities or advantages, keep it simple
     for(int i=0;i<euc;i++) {
       enu[i].AI();
       enu[i].unitDraw();
       if(enu[i].fightx==-1 ||enu[i].fighty==-1) {
-        //do nothing
+        //do nothing if there's nothing to fight
       }
       else {
         
@@ -390,14 +399,14 @@ void draw() {
    plu[i].turn = true; 
   }
   }
-  if(hit) {
+  if(hit) { //displays the "xx damage!" thing
     if(p<100) {
     p++;
     if(rand3 <= critrate) {
     strokeWeight(5);
     stroke(0);
     fill(255);
-    rect(530,370,130,50);
+    rect(530,370,150,50);
     type("Crit! " + dmval + " damage.", 535, 395, 0, 0, 0, 255);
     }
     else {
@@ -415,7 +424,7 @@ void draw() {
     
     }
   }
-  if((!hit && pick) ||(!hit && turnOver())) {
+  if((!hit && pick) ||(!hit && turnOver())) { //displays if there's a miss
     if(p<100) {
       p++;
     strokeWeight(5);
@@ -458,7 +467,7 @@ void draw() {
     type("Speed",100,160,255,255,255,255);
     type(String.valueOf(plu[url].spd),200,160,255,255,255,255);
   }
-  if(eabout) {
+  if(eabout) { //doesn't work for some reason, likely button input related not display related
     strokeWeight(1);
     stroke(255);
     fill(220,0,55);
@@ -488,7 +497,7 @@ void draw() {
 }
 }//end of draw
 
-public int unitfinder(int x, int y) {
+public int unitfinder(int x, int y) { // finds the id of a selected unit
   int n = 0;
   //finds the specified unit
   for(int i=0;i<plu.length;i++) {
@@ -498,7 +507,7 @@ public int unitfinder(int x, int y) {
   }
   return n;
 }
-private int enfinder(int x, int y) {
+private int enfinder(int x, int y) { //finds the id of a selected enemy
   int n =0;
   for(int i=0;i<enu.length;i++) {
     if(enu[i].locx == x && enu[i].locy == y) {
@@ -507,7 +516,7 @@ private int enfinder(int x, int y) {
   }
   return n;
 }
-private boolean turnOver() {
+private boolean turnOver() { //checks if all allies have gone
   for(int i=0;i<puc;i++) {
     if(plu[i].turn) {
       return false;
@@ -617,11 +626,7 @@ private boolean czech(int x, int y) { //dependency method for the above, makes i
   }
   return false;
 }
-void delay(int delay) {
- int time = millis();
- while(millis()-time<=delay) {}
-}
-void mvrt() {
+void mvrt() { //dependency for movement
   //sets the return point for the cursor, and allows the movement range to remain static, also permits undoing movement for canceled actions
   holdx=cursor.lx;
   holdy=cursor.ly;
@@ -733,11 +738,11 @@ void generateTiles() { // for generating the actual map of tiles
   }
   for(int i=0;i<c;i++) {
     for(int a=0;a<r;a++) {
-       grid[i][a].associate(tilePos[i][a]); //calling association
+       grid[i][a].associate(tilePos[i][a]); //calling association in gameMap
     } 
   }
 }
-int occupied[][] = new int[euc][3];
+int occupied[][] = new int[euc][3]; //creates the arrays which contain the positions of all units. Acts as a middleman to grid.
 int playoccu[][] = new int[puc][3];
 void placeUnits() { //for generating the actual map of units
   int corner = (int) Math.round(random(3)+1);
@@ -881,7 +886,7 @@ void placeUnits() { //for generating the actual map of units
     }
   }
 }
-public boolean isOnUnit() {
+public boolean isOnUnit() { //calls if there's a unit under the cursor. Redundant due to the beneath but too invested to be worth deprecating and removing.
    for(int i=0;i<puc;i++) {
      if(playoccu[i][1] == cursor.lx && playoccu[i][2] == cursor.ly) {
         return true; 
@@ -889,7 +894,7 @@ public boolean isOnUnit() {
    }
    return false;
 }
-public boolean isUnit(int x, int y) {
+public boolean isUnit(int x, int y) { //calls if there's a unit in a specified position
    for(int i=0;i<puc;i++) {
      if(playoccu[i][1] == x && playoccu[i][2] == y) {
        return true;
