@@ -1,3 +1,7 @@
+import processing.sound.*;
+SoundFile file;
+String audioName = "will's song.wav";
+String path;
 //set variable for setup void graphics
 //setup all pre-created/prerendered graphics and variables for generation
 PImage plance, psword, paxe, pcav, parmor, parcher, pmage;
@@ -7,9 +11,12 @@ int c = 24; //set equal to double the width divided by 100
 PShape name;
 PFont f;
 int holdx=0,holdy=0;
-int p=0;
+int p=0, oops=0;
+int selection = 1;
+boolean pick = false;
 int tilePos[][] = new int[c][r];
 int xtemp, ytemp, url, msel=1;
+int nearby[][] = new int[12][2];
 gameMap grid[][] = new gameMap[c][r]; //new class used for replicating the map and drawing the grid
 Selector cursor = new Selector(0,0);
 Selector point = new Selector(60, 68);
@@ -22,10 +29,18 @@ Unit enu[] = new Unit[euc];
 
 void setup() {
   size(1200,800);
+  path = sketchPath(audioName);
+  file = new SoundFile(this, path);
+  file.play();
   for(int i=0;i<c;i++) {
     for(int a=0;a<r;a++) {
       grid[i][a] = new gameMap(i*50,a*50,50,50, tilePos[i][a]); //initializing the grid display
     } 
+  }
+  for(int i=0;i<12;i++) {
+    for(int a=0;a<2;a++) {
+      nearby[i][a] = -1;
+    }
   }
   for(int i=0;i<c;i++) {
    for(int z=0;z<r;z++) {
@@ -96,11 +111,15 @@ void draw() {
      playoccu[i][1]=plu[playoccu[i][0]].locx; 
      playoccu[i][2]=plu[playoccu[i][0]].locy;
     }
+    for(int i=0;i<occupied.length;i++) {
+     occupied[i][1]=enu[occupied[i][0]].locx; 
+     occupied[i][2]=enu[occupied[i][0]].locy;
+    }
     cursor.Display();
     if(keyPressed) { //moving the cursor when not in combat, and when a unit is not selected
     if(!hold) {
-      hold = true;
-      if(key == CODED && !menu) {
+    if(key == CODED && !menu && !fight) {
+        hold = true;
         if(keyCode == UP) {
           if(cursor.getY()-50 >=0) {
             cursor.setLocation(cursor.getX(), cursor.getY()-50);
@@ -123,6 +142,7 @@ void draw() {
         }
       }
       if(key == CODED && menu) {
+        hold = true;
         if(keyCode == UP) {
           if(point.ly-30 >=68) {
             point.ly-=30;
@@ -136,12 +156,27 @@ void draw() {
           }
         }
       }
-      if(key == 'z' && !move && menu || key == 'Z' && !move && menu) {
+      if(key == CODED && fight && !pick) {
+        hold = true;
+          if(keyCode == UP && selection>1|| keyCode == LEFT && selection>1) {
+            selection--;
+            cursor.lx=nearby[selection][0];
+            cursor.ly=nearby[selection][1];
+          }
+          if(keyCode == DOWN && selection<oops || keyCode == RIGHT && selection<oops) {
+            selection++;
+            cursor.lx=nearby[selection][0];
+            cursor.ly=nearby[selection][1];
+          }
+      }
+      if((key == 'z' && !move && menu && !hold) || (key == 'Z' && !move && menu && !hold)) {
         hold=true;
         if(msel==1) {
           if(inRangeFinder()) {
             fight=true;
             menu=false;
+            move = false;
+            once = false;
           }
           else if(!inRangeFinder()){
             notag=true;
@@ -158,7 +193,7 @@ void draw() {
           move = false;
         }
       }
-      if(key == 'z' && move && !isOnUnit() && isNotOnUnit() && cursor.distanceFrom(plu[url].locx, plu[url].locy, plu[url].mv) <= plu[url].mv|| key == 'Z' && isNotOnUnit() && move && cursor.distanceFrom(plu[url].locx, plu[url].locy, plu[url].mv) <= plu[url].mv) {
+      if((key == 'z' && move && !isOnUnit() && !cursor.isOccupied() && cursor.distanceFrom(plu[url].locx, plu[url].locy, plu[url].mv) && !hold) || (key == 'Z' && !isOnUnit() && !cursor.isOccupied() && move && cursor.distanceFrom(plu[url].locx, plu[url].locy, plu[url].mv) && !hold)) {
         hold = true;
         menu = true;
         plu[url].locx = cursor.lx;
@@ -167,20 +202,26 @@ void draw() {
         move = false;
         once = false;
       }
-      if(key == 'z' && !move && !menu && isOnUnit()|| key == 'Z' && !move && !menu && isOnUnit()) {
+      if((key == 'z' && !move && !menu && isOnUnit() && !hold && plu[unitfinder(cursor.lx,cursor.ly)].turn) || (key == 'Z' && !move && !menu && isOnUnit() && !hold && plu[unitfinder(cursor.lx,cursor.ly)].turn)) {
         hold = true;
         move = true;
       }
+      if(key == 'z' && !hold && !pick && fight || key == 'Z' && !hold && !pick && fight) {
+          pick = true; 
+        }
+        if(key == 'x' && !hold && !pick && !menu && !move && fight || key == 'x' && !hold && !pick && !menu && !move && fight) {
+          fight = false;
+          menu = true;
+        }
       
-      
-      if(key == 'x' && move|| key == 'X' && move) {
+      if((key == 'x' && move && !hold) || (key == 'X' && move && !hold)) {
         hold = true;
         move = false;
         once = false;
         cursor.lx = holdx;
         cursor.ly = holdy;
       }
-      if(key == 'x' && menu && !move|| key == 'X' && menu && !move) {
+      if((key == 'x' && menu && !move & !hold) || (key == 'X' && menu && !move && !hold)) {
         menu = false;
         move = false;
         hold = true;
@@ -190,9 +231,10 @@ void draw() {
         plu[url].locy = holdy;
         plu[url].unitDraw();
       }
-      if(key == 'x' && about || key == 'X' && about) {
+      if((key == 'x' && about && !hold) || (key == 'X' && about && !hold)) {
        about=false;
        menu=true;
+       hold = true;
       }
     }
   }
@@ -226,12 +268,9 @@ void draw() {
     if(!once) {
       mvrt();
       once = true;
-      url = unitfinder();
+      url = unitfinder(cursor.lx, cursor.ly);
     }
-    if(plu[url].typ == "parcher") {
-      plu[url].displayMaAr(holdx,holdy);
-    }
-    if(plu[url].typ == "pmage") {
+    if(plu[url].typ == "pmage" || plu[url].typ == "parcher") {
       plu[url].displayMaAr(holdx, holdy); 
     }
     else {
@@ -239,10 +278,109 @@ void draw() {
     }
   }
   if(fight) {
-    
+    if(pick) {
+    int rand1=0,rand2=0,rand3=0;
+        rand1 = (int) Math.round(random(99))+1;
+        rand2 = (int) Math.round(random(99))+1;
+        rand3 = (int) Math.round(random(99))+1;
+        int hitrate = plu[url].skl*2+plu[url].lck/2;
+        int critrate = plu[url].lck/3;
+        if((rand1+rand2)/2 <=hitrate) {
+          if(rand3 <= critrate) {
+            enu[enfinder(nearby[selection][0], nearby[selection][0])].damage((plu[url].strMag-enu[enfinder(nearby[selection][0], nearby[selection][0])].def)*3);
+              strokeWeight(5);
+              stroke(0);
+              fill(255);
+              rect(530,370,130,50);
+              type("Crit! " + (plu[url].strMag-enu[enfinder(nearby[selection][0], nearby[selection][0])].def)*3 + " damage.", 535, 395, 0, 0, 0, 255);
+              delay(2000);
+            plu[url].turn = false;
+            url=-1;
+            fight = false;
+          }
+          else {
+            enu[enfinder(nearby[selection][0], nearby[selection][0])].damage((plu[url].strMag-enu[enfinder(nearby[selection][0], nearby[selection][0])].def));
+              strokeWeight(5);
+              stroke(0);
+              fill(255);
+              rect(530,370,130,50);
+              type((plu[url].strMag-enu[enfinder(nearby[selection][0], nearby[selection][0])].def) + " damage.", 535, 395, 0, 0, 0, 255); 
+              delay(2000);
+            plu[url].turn = false;
+            url=-1;
+            fight = false;
+        }
+      }
+        else {
+              strokeWeight(5);
+              stroke(0);
+              fill(255);
+              rect(530,370,130,50);
+              type("Attack missed.", 535, 395, 0, 0, 0, 255); 
+              delay(2000);
+            plu[url].turn = false;
+            url=-1;
+            fight = false;
+        }
+       }
   }
   if(turnOver()) {
-    
+    //have enemies approach nearest allies and attack. Don't add priorities, keep it simple
+    for(int i=0;i<enu.length;i++) {
+      enu[i].AI();
+      enu[i].unitDraw();
+      if(enu[i].fightx==-1 ||enu[i].fighty==-1) {
+        break;
+      }
+      else {
+        int rand1=0,rand2=0,rand3=0;
+        rand1 = (int) Math.round(random(99))+1;
+        rand2 = (int) Math.round(random(99))+1;
+        rand3 = (int) Math.round(random(99))+1;
+        int hitrate = enu[i].skl*2+enu[i].lck/2;
+        int critrate = enu[i].lck/3;
+        if((rand1+rand2)/2 <=hitrate) {
+          if(rand3 <= critrate) {
+            plu[unitfinder(enu[i].fightx,enu[i].fighty)].damage((enu[i].strMag-plu[unitfinder(enu[i].fightx,enu[i].fighty)].def)*3);
+            if(p<70) {
+              p++;
+              strokeWeight(5);
+              stroke(0);
+              fill(255);
+              rect(530,370,130,50);
+              type("Crit! " + (enu[i].strMag-plu[unitfinder(enu[i].fightx,enu[i].fighty)].def)*3 + " damage.", 535, 395, 0, 0, 0, 255); 
+            }
+            p=0;
+          }
+          else
+            plu[unitfinder(enu[i].fightx,enu[i].fighty)].damage(enu[i].strMag-plu[unitfinder(enu[i].fightx,enu[i].fighty)].def);
+            if(p<70) {
+              p++;
+              strokeWeight(5);
+              stroke(0);
+              fill(255);
+              rect(530,370,130,50);
+              type((enu[i].strMag-plu[unitfinder(enu[i].fightx,enu[i].fighty)].def)*3 + " damage.", 535, 395, 0, 0, 0, 255); 
+            }
+            p=0;
+        }
+        else {
+          if(p<70) {
+              p++;
+              strokeWeight(5);
+              stroke(0);
+              fill(255);
+              rect(530,370,130,50);
+              type("Attack missed.", 535, 395, 0, 0, 0, 255); 
+            }
+            p=0;
+        }
+        
+      }
+    }
+    for(int i=0;i<plu.length;i++) {
+      plu[i].turn = true;
+    }
   }
   if(about) { //displays the info screen for units
     strokeWeight(1);
@@ -275,25 +413,24 @@ void draw() {
   } //end (!title)  
 }
 
-private int unitfinder() {
+public int unitfinder(int x, int y) {
   int n = 0;
   //finds the specified unit
   for(int i=0;i<plu.length;i++) {
-    if(plu[i].locx == cursor.lx && plu[i].locy == cursor.ly) {
+    if(plu[i].locx == x && plu[i].locy == y) {
       n = i;
     }
   }
   return n;
 }
-private int enfinder() {
- int n = 0;
- //finds enemies in the array
- for(int i=0;i<enu.length;i++) {
-   if(true) { 
-     n=i;
-   }
- }
- return n;
+private int enfinder(int x, int y) {
+  int n =0;
+  for(int i=0;i<enu.length;i++) {
+    if(enu[i].locx == x && enu[i].locy == y) {
+     n = i; 
+    }
+  }
+  return n;
 }
 private boolean turnOver() {
   for(int i=0;i<puc;i++) {
@@ -304,25 +441,110 @@ private boolean turnOver() {
   return true;
 }
 private boolean inRangeFinder() { //finds enemies on the map
-  for(int i=0;i<enu.length;i++) {
+oops = 0;
+nearby[0][0]=-1;
      if(plu[url].typ == "pmage" || plu[url].typ == "parcher") {         
-       if((czech(plu[url].locx+50,plu[url].locy))||(czech(plu[url].locx-50,plu[url].locy)) || (czech(plu[url].locx, plu[url].locy+50)) || (czech(plu[url].locx,plu[url].locy-50)) || (czech(plu[url].locx+100,plu[url].locy))||(czech(plu[url].locx-100,plu[url].locy)) || (czech(plu[url].locx, plu[url].locy+100)) || (czech(plu[url].locx,plu[url].locy-100))) {
-        return true; 
+       if(czech(plu[url].locx+50,plu[url].locy)) {
+         nearby[oops][0] = plu[url].locx+50;
+         nearby[oops][1] = plu[url].locy;
+         oops++;
+       }
+       if(czech(plu[url].locx-50,plu[url].locy))  {
+         nearby[oops][0] = plu[url].locx-50;
+         nearby[oops][1] = plu[url].locy;
+         oops++;
+       }
+       if(czech(plu[url].locx, plu[url].locy+50))  {
+         nearby[oops][0] = plu[url].locx;
+         nearby[oops][1] = plu[url].locy+50;
+         oops++;
+       }
+       if(czech(plu[url].locx,plu[url].locy-50))  {
+         nearby[oops][0] = plu[url].locx;
+         nearby[oops][1] = plu[url].locy-50;
+         oops++;
+       }
+       if(czech(plu[url].locx+100,plu[url].locy))  {
+         nearby[oops][0] = plu[url].locx+100;
+         nearby[oops][1] = plu[url].locy;
+         oops++;
+       }
+       if(czech(plu[url].locx-100,plu[url].locy))  {
+         nearby[oops][0] = plu[url].locx-100;
+         nearby[oops][1] = plu[url].locy;
+         oops++;
+       }
+       if(czech(plu[url].locx, plu[url].locy+100))  {
+         nearby[oops][0] = plu[url].locx;
+         nearby[oops][1] = plu[url].locy+100;
+         oops++;
+       }
+       if(czech(plu[url].locx,plu[url].locy-100))  {
+         nearby[oops][0] = plu[url].locx;
+         nearby[oops][1] = plu[url].locy-100;
+         oops++;
+       }
+       if(czech(plu[url].locx+50,plu[url].locy+50))  {
+         nearby[oops][0] = plu[url].locx+50;
+         nearby[oops][1] = plu[url].locy+50;
+         oops++;
+       }
+       if(czech(plu[url].locx+50,plu[url].locy-50))  {
+         nearby[oops][0] = plu[url].locx+50;
+         nearby[oops][1] = plu[url].locy-50;
+         oops++;
+       }
+       if(czech(plu[url].locx-50,plu[url].locy+50))  {
+         nearby[oops][0] = plu[url].locx-50;
+         nearby[oops][1] = plu[url].locy+50;
+         oops++;
+       }
+       if(czech(plu[url].locx-50,plu[url].locy-50))  {
+         nearby[oops][0] = plu[url].locx-50;
+         nearby[oops][1] = plu[url].locy-50;
+         oops++;
        }
      }
-     else if((czech(plu[url].locx+50,plu[url].locy))||(czech(plu[url].locx-50,plu[url].locy)) || (czech(plu[url].locx, plu[url].locy+50)) || (czech(plu[url].locx,plu[url].locy-50))) {
-       return true;
+     else {
+       if(czech(plu[url].locx+50,plu[url].locy)) {
+         nearby[oops][0] = plu[url].locx+50;
+         nearby[oops][1] = plu[url].locy;
+         oops++;
+       }
+       if(czech(plu[url].locx-50,plu[url].locy))  {
+         nearby[oops][0] = plu[url].locx-50;
+         nearby[oops][1] = plu[url].locy;
+         oops++;
+       }
+       if(czech(plu[url].locx, plu[url].locy+50))  {
+         nearby[oops][0] = plu[url].locx;
+         nearby[oops][1] = plu[url].locy+50;
+         oops++;
+       }
+       if(czech(plu[url].locx,plu[url].locy-50))  {
+         nearby[oops][0] = plu[url].locx;
+         nearby[oops][1] = plu[url].locy-50;
+         oops++;
+       }
      }
+  if(nearby[0][0] == -1) {
+    return false;
   }
-  return false;
+  else {
+    return true;
+  }
 }
-private boolean czech(int x, int y) { //dependency method for the above, makes it simpler to read
+private boolean czech(int x, int y) { //dependency method for the above, makes it simpler to write
   for(int i=0;i<euc;i++) {
-    if(occupied[i][0] == x && occupied[i][1] == y) {
+    if(occupied[i][1] == x && occupied[i][2] == y) {
       return true;
     }
   }
   return false;
+}
+void delay(int delay) {
+ int time = millis();
+ while(millis()-time<=delay) {}
 }
 void mvrt() {
   //sets the return point for the cursor, and allows the movement range to remain static, also permits undoing movement for canceled actions
@@ -440,7 +662,7 @@ void generateTiles() { // for generating the actual map of tiles
     } 
   }
 }
-int occupied[][] = new int[euc][2];
+int occupied[][] = new int[euc][3];
 int playoccu[][] = new int[puc][3];
 void placeUnits() { //for generating the actual map of units
   int corner = (int) Math.round(random(3)+1);
@@ -546,20 +768,21 @@ void placeUnits() { //for generating the actual map of units
                tempy= (int)Math.round(random(r));
             }
       
-      if(occupied[i][0] == tempx*50 && occupied[i][1] == tempy*50) {
+      if(occupied[i][1] == tempx*50 && occupied[i][2] == tempy*50) { //reads off as totally unnecessary, but won't remove for fear it breaks something I can't see.
         repeat = true;
       }
       else {
        repeat = false;
-       occupied[i][0] = tempx*50;
-       occupied[i][1] = tempy*50;
+       occupied[i][0] = enu[i].uid;
+       occupied[i][1] = tempx*50;
+       occupied[i][2] = tempy*50;
        enu[i].setLocation(tempx*50,tempy*50);
       }
     }
     for(int a=0;a<euc;a++) {
       for(int b=0;b<euc;b++) {
-        if(occupied[b][0] == occupied[a][0] && b != a) {
-          if(occupied[b][1] == occupied[a][1]) {
+        if(occupied[b][1] == occupied[a][1] && b != a) {
+          if(occupied[b][2] == occupied[a][2]) {
             if(ecornr==1) {
                tempx= (int)Math.round(random(c));
                tempy= (int)Math.round(random(r*.6));
@@ -585,17 +808,17 @@ void placeUnits() { //for generating the actual map of units
 }
 public boolean isOnUnit() {
    for(int i=0;i<puc;i++) {
-     if(playoccu[i][0] == cursor.lx && playoccu[i][1] == cursor.ly) {
+     if(playoccu[i][1] == cursor.lx && playoccu[i][2] == cursor.ly) {
         return true; 
      }
    }
    return false;
 }
-public boolean isNotOnUnit() {
-   for(int i=0;i<euc;i++) {
-     if(occupied[i][0] == cursor.lx && occupied[i][1] == cursor.ly) {
-        return false;
+public boolean isUnit(int x, int y) {
+   for(int i=0;i<puc;i++) {
+     if(playoccu[i][1] == x && playoccu[i][2] == y) {
+       return true;
      }
    }
-   return true;
+   return false;
 }

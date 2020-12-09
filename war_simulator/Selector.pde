@@ -8,12 +8,12 @@ class Selector {
  
  public boolean isOccupied() {
    for(int i=0;i<puc;i++) {
-     if(this.lx/50 == playoccu[i][0] && this.ly/50 == playoccu[i][1]) {
+     if(this.lx == playoccu[i][1] && this.ly == playoccu[i][2]) {
        return true;
      }
    }
    for(int i=0;i<euc;i++) {
-     if(this.lx/50 == occupied[i][0] && this.ly/50 == occupied[i][1]) {
+     if(this.lx == occupied[i][0] && this.ly == occupied[i][1]) {
        return true;
      }
    }
@@ -29,30 +29,33 @@ public int getX() {
 public int getY() {
   return this.ly;
 }
-public int distanceFrom(int n, int s, int m) {
-  int i = 0, x = this.lx/50, y = this.ly/50;
-  n/=50;
-  s/=50;
-  while(i< m && n!=x && s!=y) {
-     if(x<n) {
-       x++;
+public boolean distanceFrom(int n, int s, int m) { //provide as current location x, current location y, and movement of a unit.
+//intended as a check that wherever the cursor is, the unit can actually move that far
+  int i = 0, x = this.lx, y = this.ly;  //an iterator, the current location of the cursor in x and y
+  while(i< m && (n!=x || s!=y)) { //if the iteration is less than the move distance, and we haven't yet reached the unit location from the cursor
+     if(x<n && i<m) { //should it be to the left
+       x+=50; //^ also includes this security check for perfect diagonals
+       i++;
      }
-     if(x>n) {
-      x--; 
+     if(x>n && i<m) { //should it be to the right
+      x-=50; 
+      i++;
      }
-     if(y<s) {
-      y++; 
+     if(y<s && i<m) { //should it be above
+      y+=50; 
+      i++;
      }
-     if(y>s) {
-      y--; 
+     if(y>s && i<m) { //should it be beneath
+      y-=50; 
+      i++;
      }
-     i++;
+    //iterates on each if rather than the end because that's how movement works in this game
   }
-  if(x!=n || y!=s) {
-   return i+1; 
+  if(x!=n || y!=s) { //if either of these isn't there yet, check fails
+   return false; 
   }
-  else {
-    return i;
+  else {//if both are in position and range, check passes
+    return true;
   }
 }
 

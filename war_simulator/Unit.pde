@@ -2,6 +2,7 @@ class Unit {
  private int uid, HPMax, HPNow, strMag, spd, skl, lck, def, res, mv, locx, locy; 
  private boolean turn;
  private String typ;
+ public int fightx=-1, fighty=-1;
   Unit(int newUid, String newtype, int newHPMax, int newStrMag, int newSpd, int newSkl, int newLck, int newDef, int newRes, int newMv) {
     //lengthy, but creates all stats for each new playerunit
     uid=newUid;
@@ -32,7 +33,220 @@ class Unit {
     stats[7]=this.uid;
     return stats;
   }
-  
+  public void AI() {
+   for(int y=-this.mv;y<this.mv;y++) {
+     for(int x=-this.mv-(2*y);x<this.mv;x++) {
+       if(this.typ != "earcher" & this.typ != "emage") {
+       if(isUnit(this.locx+(x*50),this.locy+(y*50))) {
+         if(x>=0 && y>=0 && !isUnit(this.locx+(x*50)-50,this.locy+(y*50))) {
+           //direction down-right
+           this.locx = this.locx+(x*50)-50;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50);
+           fighty = this.locy+(y*50);
+         }
+         if(x>=0 && y>=0 && !isUnit(this.locx+(x*50),this.locy+(y*50)-50)) {
+           //direction down-right
+           this.locx = this.locx+(x*50);
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)-50;
+           fighty = this.locy+(y*50);
+         }
+         if(x>=0 && y<=0 && !isUnit(this.locx+(x*50)-50,this.locy+(y*50))) {
+           //direction up-right
+           this.locx = this.locx+(x*50)-50;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50);
+           fighty = this.locy+(y*50);
+         }
+         if(x>=0 && y<=0 && !isUnit(this.locx+(x*50),this.locy+(y*50)+50)) {
+           //direction up-right
+           this.locx = this.locx+(x*50);
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)+50;
+           fighty = this.locy+(y*50);
+         }
+         if(x<=0 && y>=0 && !isUnit(this.locx+(x*50)+50,this.locy+(y*50))) {
+           //direction down-left
+           this.locx = this.locx+(x*50)+50;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50);
+           fighty = this.locy+(y*50);
+         }
+         if(x<=0 && y>=0 && !isUnit(this.locx+(x*50),this.locy+(y*50)-50)) {
+           //direction down-left
+           this.locx = this.locx+(x*50);
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)-50;
+           fighty = this.locy+(y*50);
+         }
+         if(x<=0 && y<=0 && !isUnit(this.locx+(x*50)+50,this.locy+(y*50))) {
+           //direction up-left
+           this.locx = this.locx+(x*50)+50;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50);
+           fighty = this.locy+(y*50);
+         }
+         if(x<=0 && y<=0 && !isUnit(this.locx+(x*50),this.locy+(y*50)+50)) {
+           //direction up-left
+           this.locx = this.locx+(x*50);
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)+50;
+           fighty = this.locy+(y*50);
+         }
+       }
+       }
+       else {
+         if(isUnit(this.locx+(x*50),this.locy+(y*50))) {
+         if(x>=0 && y>=0 && !isUnit(this.locx+(x*50)-50,this.locy+(y*50)-50)) {
+           //direction down-right
+           this.locx = this.locx+(x*50)-50;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)-50;
+           fighty = this.locy+(y*50);
+         }
+         if(x>=0 && y>=0 && !isUnit(this.locx+(x*50)-100,this.locy+(y*50))) {
+           //direction down-right
+           this.locx = this.locx+(x*50)-100;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50);
+           fighty = this.locy+(y*50);
+         }
+         if(x>=0 && y>=0 && !isUnit(this.locx+(x*50),this.locy+(y*50)-100)) {
+           //direction down-right
+           this.locx = this.locx+(x*50);
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)-100;
+           fighty = this.locy+(y*50);
+         }
+         if(x>=0 && y>=0 && !isUnit(this.locx+(x*50)-50,this.locy+(y*50))) {
+           //direction down-right
+           this.locx = this.locx+(x*50)-50;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50);
+           fighty = this.locy+(y*50);
+         }
+         if(x>=0 && y>=0 && !isUnit(this.locx+(x*50),this.locy+(y*50)-50)) {
+           //direction down-right
+           this.locx = this.locx+(x*50);
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)-50;
+           fighty = this.locy+(y*50);
+         }
+         
+         if(x>=0 && y<=0 && !isUnit(this.locx+(x*50)-50,this.locy+(y*50)+50)) {
+           //direction up-right
+           this.locx = this.locx+(x*50)-50;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)+50;
+           fighty = this.locy+(y*50);
+         }
+         if(x>=0 && y<=0 && !isUnit(this.locx+(x*50)-100,this.locy+(y*50))) {
+           //direction up-right
+           this.locx = this.locx+(x*50)-100;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50);
+           fighty = this.locy+(y*50);
+         }
+         if(x>=0 && y<=0 && !isUnit(this.locx+(x*50)-50,this.locy+(y*50)+100)) {
+           //direction up-right
+           this.locx = this.locx+(x*50);
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)+100;
+           fighty = this.locy+(y*50);
+         }
+         if(x>=0 && y<=0 && !isUnit(this.locx+(x*50)-50,this.locy+(y*50))) {
+           //direction up-right
+           this.locx = this.locx+(x*50)-50;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50);
+           fighty = this.locy+(y*50);
+         }
+         if(x>=0 && y<=0 && !isUnit(this.locx+(x*50),this.locy+(y*50)+50)) {
+           //direction up-right
+           this.locx = this.locx+(x*50);
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)+50;
+           fighty = this.locy+(y*50);
+         }
+         
+         if(x<=0 && y>=0 && !isUnit(this.locx+(x*50)+100,this.locy+(y*50))) {
+           //direction down-left
+           this.locx = this.locx+(x*50)+100;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50);
+           fighty = this.locy+(y*50);
+         }
+         if(x<=0 && y>=0 && !isUnit(this.locx+(x*50),this.locy+(y*50)-100)) {
+           //direction down-left
+           this.locx = this.locx+(x*50);
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)-100;
+           fighty = this.locy+(y*50);
+         }
+         if(x<=0 && y>=0 && !isUnit(this.locx+(x*50)+50,this.locy+(y*50)-50)) {
+           //direction down-left
+           this.locx = this.locx+(x*50)+50;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)-50;
+           fighty = this.locy+(y*50);
+         }
+         if(x<=0 && y>=0 && !isUnit(this.locx+(x*50)+50,this.locy+(y*50))) {
+           //direction down-left
+           this.locx = this.locx+(x*50)+50;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50);
+           fighty = this.locy+(y*50);
+         }
+         if(x<=0 && y>=0 && !isUnit(this.locx+(x*50),this.locy+(y*50)-50)) {
+           //direction down-left
+           this.locx = this.locx+(x*50);
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)-50;
+           fighty = this.locy+(y*50);
+         }
+         
+         if(x<=0 && y<=0 && !isUnit(this.locx+(x*50)+50,this.locy+(y*50))) {
+           //direction up-left
+           this.locx = this.locx+(x*50)+100;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50);
+           fighty = this.locy+(y*50);
+         }
+         if(x<=0 && y<=0 && !isUnit(this.locx+(x*50),this.locy+(y*50)+100)) {
+           //direction up-left
+           this.locx = this.locx+(x*50);
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)+100;
+           fighty = this.locy+(y*50);
+         }
+         if(x<=0 && y<=0 && !isUnit(this.locx+(x*50)+50,this.locy+(y*50)+50)) {
+           //direction up-left
+           this.locx = this.locx+(x*50)+50;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)+50;
+           fighty = this.locy+(y*50);
+         }
+         if(x<=0 && y<=0 && !isUnit(this.locx+(x*50)+50,this.locy+(y*50))) {
+           //direction up-left
+           this.locx = this.locx+(x*50)+50;
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50);
+           fighty = this.locy+(y*50);
+         }
+         if(x<=0 && y<=0 && !isUnit(this.locx+(x*50),this.locy+(y*50)+50)) {
+           //direction up-left
+           this.locx = this.locx+(x*50);
+           fightx = this.locx+(x*50);
+           this.locy = this.locy+(y*50)+50;
+           fighty = this.locy+(y*50);
+         }
+         
+       }
+       }
+     }
+   }
+  }
   public void displayMaAr(int x, int y) {
     noStroke();
     fill(0,50,200, 100);
@@ -113,6 +327,12 @@ class Unit {
   }
   public void damage(int damage) {
      this.HPNow -= damage;
+     if(this.HPNow <=0) {
+      killed(); 
+     }
+  }
+  public void killed() {
+    this.typ = "";
   }
   public int getMv() {
    return this.mv; 
@@ -170,6 +390,9 @@ class Unit {
     if(this.typ=="emage") {
       image(emage,(float)locx,(float)locy); 
     }
+    else {
+      //do not display, used for defeated units.
+    }
     }
     else if(!turn) {
     tint(100);
@@ -214,6 +437,9 @@ class Unit {
     }
     if(this.typ=="emage") {
       image(emage,(float)locx,(float)locy); 
+    }
+    else {
+     //do not display, used for defeated units 
     }
     }
    }
