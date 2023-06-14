@@ -1,3 +1,4 @@
+(Imported from an old student account to keep everything in one place.)
 Written and released under the GNU General Public License.
 
 Any and all unoriginal ideas and mechanics belong to their original creators. Any similarities to current media is purely coincidental.
